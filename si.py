@@ -26,14 +26,17 @@ def abline(slope, intercept):
     axes = plt.gca()
     x_vals = np.array(axes.get_xlim())
     y_vals = intercept + slope * x_vals
-    return plt.plot(x_vals, y_vals, '--')
+    return plt.plot(x_vals, y_vals)
+def plotResiduals(slope, intercept, X, Y):
+    for i in range(0, len(X)) :
+         plt.plot([X[i], X[i]], [Y[i], slope*X[i]+intercept], '--')
 def onclick(event):
     global line
     print('button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
           (event.button, event.x, event.y, event.xdata, event.ydata)) 
     Xdata.append(event.xdata)
     Ydata.append(event.ydata)
-    plt.plot(event.xdata, event.ydata, ',', marker = 'o', markersize=10)
+    plt.plot(event.xdata, event.ydata, ',', marker = 'o', markersize=2)
     #plt.setp(p, markersize=100)
     if len(Xdata) > 2 :             
         line.remove()
@@ -47,7 +50,7 @@ def onclick(event):
         m = num/den
         c = ybar - m*xbar
         line, = abline(m, c)
+        plotResiduals(m, c, Xdata, Ydata)
     fig.canvas.draw()
-
 cid = fig.canvas.mpl_connect('button_press_event', onclick)
 plt.show()
