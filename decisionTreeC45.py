@@ -87,12 +87,15 @@ def discretise(vector, threshold):
 
 def findBestThreshold(vector, decision):
     unique = list(set(vector))
+    unique.sort(reverse = True)
+    #print(unique)
     finalVec = []
     maxGain = 0
     thresh = 0
-    for i in range(0, len(unique)):
+    for i in range(2, len(unique)):
         hum = list(vector)
         vect = discretise(hum, unique[i])
+        #print(i, vect)
         gain, dec = gainEval(hum, y, ['low', 'high'])
         gain = 0.94 -  gain
         if gain > maxGain:
@@ -103,6 +106,7 @@ def findBestThreshold(vector, decision):
     return finalVec
 def findEntropySum(X, y, attributesList, index):
     summer = 0
+    splitInf = 0
     #print("In findEntropySum")
     for i in range(0, len(attributesList)):
         #print(X.iloc[:, index], attributesList[i])
@@ -111,12 +115,16 @@ def findEntropySum(X, y, attributesList, index):
         #print(prob)
         entro, dec = entropyEval(newY)
         #print(entro, " Loop", i)
+        if prob!=0:
+            splitInf = splitInf + math.log2(prob)*-1*prob
+            # print(splitInf)
         summer = summer + prob*entro
-    return summer, dec
+    return summer, dec, splitInf
 
 def id3(X, y, lastSigFeature, val):
     #print("In id3")
     entropySystem, dec = entropyEval(y)
+    #print(entropySystem)
     #print(entropySystem)
     if entropySystem == 0:
         #print("Endss")
@@ -132,13 +140,15 @@ def id3(X, y, lastSigFeature, val):
         for i in X :
             if i not in lastSigFeature:
                 #print(attributes[index], index)
-                value, dec = findEntropySum(X, y, attributes[index], index)
-                entropyVal = entropySystem - value
-                #print("Entropy with respect to ", i, " is ", entropyVal)
-                if entropyVal > maxi:
-                    maxi = entropyVal
-                    significantFeature = i
-                    sigInd = index
+                value, dec, splitInfo = findEntropySum(X, y, attributes[index], index)
+                if splitInfo != 0:
+                    entropyVal = 1.0*(entropySystem - value)/splitInfo
+                    print("GR with respect to ", i, " is ", entropyVal)
+                    
+                    if entropyVal > maxi:
+                        maxi = entropyVal
+                        significantFeature = i
+                        sigInd = index
             index = index+1    
         if len(lastSigFeature) > 0:
             print("For ", lastSigFeature[len(lastSigFeature)-1],  "as", val, "Maximum gain is observed in ",significantFeature, " with a value of", maxi )
@@ -148,14 +158,19 @@ def id3(X, y, lastSigFeature, val):
         return significantFeature, sigInd, dec
 
 def mainFunction(X, y, lastSigFeature, val):
+    #print("In main func")
     sigFeature, sigInd, dec = id3(X, y, lastSigFeature, val)
     if sigFeature == 'none':
        return
     lastSigFeature.append(sigFeature)
     attri = attributes[sigInd]
     for i in attri:
+        #print(i)
         df_new=X[X[sigFeature]==i]
+        #print(df_new)
         y_new=y[df_new.index.values]
+        #print(y_new)
+        #print(lastSigFeature)
         mainFunction(df_new, y_new, lastSigFeature, i)
     lastSigFeature.pop()
 
